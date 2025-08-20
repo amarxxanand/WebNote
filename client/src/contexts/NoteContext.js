@@ -84,20 +84,157 @@ export const NoteProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { encryptNote, decryptNote, isAuthenticated } = useAuth();
 
-  // Initialize by fetching cloud notes
+  // Define fetchNotes function before it's used in useEffect
+  const fetchNotes = useCallback(async (page = 1) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      
+      let cloudNotes = [];
+      
+      // Try to fetch cloud notes if user is authenticated
+      if (localStorage.getItem('token')) {
+        try {
+          const params = new URLSearchParams({
+            page,
+            limit: 20,
+            sortBy: state.sortBy,
+            sortOrder: state.sortOrder,
+            filter: state.filter,
+            ...(state.searchQuery && { search: state.searchQuery })
+          });
+
+          const response = await axios.get(`/api/notes?${params}`);
+          const rawNotes = response.data.notes || [];
+          
+          console.log('📥 Fetched raw notes:', rawNotes.length);
+          if (rawNotes.length > 0) {
+            console.log('Sample raw note:', {
+              id: rawNotes[0]._id,
+              title: typeof rawNotes[0].title,
+              content: typeof rawNotes[0].content,
+              _encrypted: rawNotes[0]._encrypted,
+              titleHasCiphertext: rawNotes[0].title && typeof rawNotes[0].title === 'object' && !!rawNotes[0].title.ciphertext
+            });
+          }
+          
+          // If decryption is available, decrypt all notes in parallel
+          if (decryptNote) {
+            console.log('🔓 Starting parallel decryption of', rawNotes.length, 'notes...');
+            const startTime = performance.now();
+            
+            // Process notes in parallel for much faster decryption
+            cloudNotes = await Promise.all(
+              rawNotes.map(async (note, index) => {
+                try {
+                  const decrypted = decryptNote(note);
+                  console.log(`✅ Note ${index + 1} decrypted:`, {
+                    id: note._id,
+                    title: typeof decrypted.title === 'string' ? decrypted.title.substring(0, 30) + '...' : 'Not string',
+                    titleType: typeof decrypted.title
+                  });
+                  return decrypted;
+                } catch (error) {
+                  console.error(`❌ Failed to decrypt note ${note._id}:`, error);
+                  return {
+                    ...note,
+                    title: 'Decryption Failed',
+                    content: '',
+                    _decryptionFailed: true
+                  };
+                }
+              })
+            );
+            
+            const endTime = performance.now();
+            console.log(`🎉 Parallel decryption completed in ${(endTime - startTime).toFixed(2)}ms`);
+            
+            // Check for any decryption failures
+            const failedDecryptions = cloudNotes.filter(note => note._decryptionFailed).length;
+            const keyMismatches = cloudNotes.filter(note => note._keyMismatch).length;
+            
+            if (keyMismatches > 0) {
+              toast.error(`${keyMismatches} note(s) encrypted with different key - try refreshing`);
+            } else if (failedDecryptions > 0) {
+              toast.warning(`${failedDecryptions} note(s) failed to decrypt properly`);
+            }
+          } else {
+            console.log('⏳ Decryption not ready, storing raw notes temporarily');
+            cloudNotes = rawNotes.map(note => ({
+              ...note,
+              title: typeof note.title === 'string' ? note.title : 'Loading...',
+              content: typeof note.content === 'string' ? note.content : 'Loading...',
+              _needsDecryption: true
+            }));
+          }
+          
+          dispatch({ 
+            type: 'SET_PAGINATION', 
+            payload: { 
+              totalPages: response.data.totalPages, 
+              currentPage: response.data.currentPage, 
+              total: response.data.total 
+            } 
+          });
+        } catch (error) {
+          console.log('No cloud notes available or user not authenticated');
+        }
+      }
+      
+      // Set notes immediately
+      dispatch({ type: 'SET_NOTES', payload: cloudNotes });
+      
+    } catch (error) {
+      toast.error('Failed to fetch notes');
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, [state.sortBy, state.sortOrder, state.filter, state.searchQuery, decryptNote]);
+
+  // Initialize by fetching cloud notes - start as soon as user is authenticated
   useEffect(() => {
-    if (!hasInitialized && !isLoading && isAuthenticated && decryptNote) {
+    if (!hasInitialized && !isLoading && isAuthenticated) {
       // Clean up any leftover local note data from previous versions
       localStorage.removeItem('webnote-local-notes');
       
-      console.log('🔄 Initializing notes fetch with decryption available');
+      console.log('🔄 Starting immediate notes fetch');
       setIsLoading(true);
+      
+      // Start fetch immediately, don't wait for full decryption setup
       fetchNotes().finally(() => {
         setHasInitialized(true);
         setIsLoading(false);
       });
     }
-  }, [hasInitialized, isLoading, isAuthenticated, decryptNote]);
+  }, [hasInitialized, isLoading, isAuthenticated, fetchNotes]);
+
+  // Re-decrypt notes when decryptNote becomes available
+  useEffect(() => {
+    if (decryptNote && state.notes.length > 0) {
+      const needsDecryption = state.notes.some(note => note._needsDecryption);
+      if (needsDecryption) {
+        console.log('🔄 Decryption now available, re-decrypting notes...');
+        const reDecryptedNotes = state.notes.map(note => {
+          if (note._needsDecryption) {
+            try {
+              const decrypted = decryptNote(note);
+              console.log('✅ Re-decrypted note:', decrypted.title);
+              return decrypted;
+            } catch (error) {
+              console.error('❌ Failed to re-decrypt note:', error);
+              return {
+                ...note,
+                title: 'Decryption Failed',
+                content: '',
+                _decryptionFailed: true
+              };
+            }
+          }
+          return note;
+        });
+        dispatch({ type: 'SET_NOTES', payload: reDecryptedNotes });
+      }
+    }
+  }, [decryptNote, state.notes]);
 
   // Add a function to verify encryption key consistency
   const verifyEncryptionKey = useCallback(async () => {
@@ -131,114 +268,6 @@ export const NoteProvider = ({ children }) => {
       return false;
     }
   }, [isAuthenticated, encryptNote, decryptNote]);
-
-
-
-  const fetchNotes = useCallback(async (page = 1) => {
-    if (!decryptNote) {
-      console.warn('⚠️ Decryption not available yet, skipping notes fetch');
-      return;
-    }
-    
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      
-      let cloudNotes = [];
-      
-      // Try to fetch cloud notes if user is authenticated
-      if (localStorage.getItem('token')) {
-        try {
-          const params = new URLSearchParams({
-            page,
-            limit: 20,
-            sortBy: state.sortBy,
-            sortOrder: state.sortOrder,
-            filter: state.filter,
-            ...(state.searchQuery && { search: state.searchQuery })
-          });
-
-          const response = await axios.get(`/api/notes?${params}`);
-          const rawNotes = response.data.notes || [];
-          
-          console.log('Fetched raw notes count:', rawNotes.length);
-          if (rawNotes.length > 0) {
-            console.log('Sample raw note:', {
-              id: rawNotes[0]._id,
-              title: typeof rawNotes[0].title,
-              content: typeof rawNotes[0].content,
-              _encrypted: rawNotes[0]._encrypted,
-              titleHasCiphertext: rawNotes[0].title && typeof rawNotes[0].title === 'object' && !!rawNotes[0].title.ciphertext
-            });
-          }
-          
-          console.log('🔓 Starting bulk decryption of', rawNotes.length, 'notes...');
-          
-          // Decrypt notes after fetching
-          cloudNotes = rawNotes.map((note, index) => {
-            console.log(`🔓 Decrypting note ${index + 1}/${rawNotes.length}:`, note._id);
-            const decrypted = decryptNote(note);
-            console.log(`✅ Note ${index + 1} decrypted:`, {
-              id: note._id,
-              title: typeof decrypted.title === 'string' ? decrypted.title.substring(0, 30) + '...' : 'Not string',
-              titleType: typeof decrypted.title,
-              contentType: typeof decrypted.content,
-              _decryptionFailed: decrypted._decryptionFailed,
-              _keyMismatch: decrypted._keyMismatch
-            });
-            
-            // Track decryption failures for user awareness
-            if (decrypted._decryptionFailed) {
-              console.warn(`❌ Note decryption failed for note ID: ${note._id}`);
-            }
-            if (decrypted._keyMismatch) {
-              console.error(`🔑 Key mismatch for note ID: ${note._id}`);
-            }
-            
-            return decrypted;
-          });
-          
-          console.log('🎉 Bulk decryption complete. Decrypted notes sample:');
-          if (cloudNotes.length > 0) {
-            console.log('First decrypted note:', {
-              id: cloudNotes[0]._id,
-              title: cloudNotes[0].title,
-              titleType: typeof cloudNotes[0].title,
-              titlePreview: typeof cloudNotes[0].title === 'string' ? cloudNotes[0].title.substring(0, 50) + '...' : 'Not string'
-            });
-          }
-          
-          // Check if we have any decryption failures
-          const failedDecryptions = cloudNotes.filter(note => note._decryptionFailed).length;
-          const keyMismatches = cloudNotes.filter(note => note._keyMismatch).length;
-          
-          if (keyMismatches > 0) {
-            toast.error(`${keyMismatches} note(s) encrypted with different key - try refreshing`);
-          } else if (failedDecryptions > 0) {
-            toast.warning(`${failedDecryptions} note(s) failed to decrypt properly`);
-          }
-          
-          dispatch({ 
-            type: 'SET_PAGINATION', 
-            payload: { 
-              totalPages: response.data.totalPages, 
-              currentPage: response.data.currentPage, 
-              total: response.data.total 
-            } 
-          });
-        } catch (error) {
-          console.log('No cloud notes available or user not authenticated');
-        }
-      }
-      
-      // Set only cloud notes
-      dispatch({ type: 'SET_NOTES', payload: cloudNotes });
-      
-    } catch (error) {
-      toast.error('Failed to fetch notes');
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
-  }, [state.sortBy, state.sortOrder, state.filter, state.searchQuery, decryptNote]);
 
   const createNote = async (noteData) => {
     try {

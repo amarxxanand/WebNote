@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FaGoogle, FaStickyNote, FaSearch, FaShare, FaCloud, FaMobile, FaDesktop } from 'react-icons/fa';
@@ -6,13 +6,27 @@ import '../styles/HomePage.css';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { login, register, googleLogin } = useAuth();
+  const { login, register, googleLogin, isAuthenticated, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: ''
   });
+
+  // Redirect to dashboard if user is already authenticated
+  useEffect(() => {
+    console.log('🏠 HomePage state check:', {
+      isAuthenticated,
+      loading,
+      currentPath: window.location.pathname
+    });
+    
+    if (!loading && isAuthenticated) {
+      console.log('🏠 User is already authenticated, redirecting to dashboard...');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, loading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,6 +54,30 @@ const HomePage = () => {
       [e.target.name]: e.target.value
     });
   };
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="loading-container" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        gap: '1rem'
+      }}>
+        <div className="loading-spinner" style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #f3f3f3',
+          borderTop: '3px solid #007bff',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <p>Checking authentication...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="homepage">

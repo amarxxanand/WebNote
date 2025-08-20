@@ -156,16 +156,6 @@ const Sidebar = ({
             const currentNoteId = currentNote?._id || currentNote?.id;
             const isActive = currentNoteId === noteId;
             
-            // Debug: Log what we're getting for each note
-            console.log('Sidebar rendering note:', {
-              id: noteId,
-              titleType: typeof note.title,
-              contentType: typeof note.content,
-              title: typeof note.title === 'string' ? note.title.substring(0, 20) + '...' : 'Not string',
-              _encrypted: note._encrypted,
-              _decryptionFailed: note._decryptionFailed
-            });
-            
             return (
               <div
                 key={noteId}
@@ -174,7 +164,7 @@ const Sidebar = ({
               >
                 <div className="note-item-content">
                   <div className="note-title">
-                    {typeof note.title === 'string' ? note.title : 'Encrypted Note'}
+                    {typeof note.title === 'string' ? note.title : 'Loading...'}
                     {note.isFavorite && <FaStar className="favorite-icon" />}
                     {note.isArchived && <FaArchive className="archive-icon" />}
                   </div>
@@ -185,7 +175,7 @@ const Sidebar = ({
                         {note.content.length > 100 && '...'}
                       </>
                     ) : (
-                      'Content encrypted...'
+                      'Loading content...'
                     )}
                   </div>
                   <div className="note-meta">

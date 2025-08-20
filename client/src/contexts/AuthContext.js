@@ -77,18 +77,33 @@ export const AuthProvider = ({ children }) => {
   // Check if user is authenticated on app load
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('🔍 Checking authentication on app load...', {
+        hasToken: !!state.token,
+        tokenLength: state.token?.length || 0,
+        currentPath: window.location.pathname
+      });
+      
       if (state.token) {
         try {
+          console.log('🔍 Making auth check request to /api/auth/me...');
           const response = await axios.get('/api/auth/me');
+          console.log('🔍 Auth check successful:', {
+            hasUser: !!response.data.user,
+            userId: response.data.user?._id,
+            userEmail: response.data.user?.email
+          });
+          
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: { user: response.data.user, token: state.token }
           });
         } catch (error) {
+          console.error('🔍 Authentication check failed:', error.response?.status, error.response?.data);
           localStorage.removeItem('token');
           dispatch({ type: 'LOGOUT' });
         }
       } else {
+        console.log('🔍 No token found, setting loading to false');
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
@@ -226,7 +241,8 @@ export const AuthProvider = ({ children }) => {
         console.log('🔧 Creating new encryption metadata...');
         const metadata = generateEncryptionMetadata(state.user._id);
         
-        const response = await axios.patch('/api/users/encryption', {
+        // Don't wait for the response - let it happen in background
+        axios.patch('/api/users/encryption', {
           encryption: {
             salt: metadata.salt,
             algorithm: metadata.algorithm,
@@ -234,37 +250,43 @@ export const AuthProvider = ({ children }) => {
             enabled: true,
             created: metadata.created
           }
+        }).then(response => {
+          console.log('🔧 Encryption initialized successfully');
+          dispatch({ type: 'UPDATE_USER', payload: response.data.user });
+        }).catch(error => {
+          console.error('🔧 Failed to initialize encryption:', error);
         });
-
-        console.log('🔧 Encryption initialized successfully:', {
-          hasSalt: !!response.data.user.encryption?.salt,
-          hasEncryptionKey: !!response.data.user.encryption?.encryptionKey
-        });
-
-        dispatch({ type: 'UPDATE_USER', payload: response.data.user });
-        toast.success('Encryption initialized successfully');
+        
+        // Update user immediately with the generated metadata for immediate use
+        const updatedUser = {
+          ...state.user,
+          encryption: {
+            salt: metadata.salt,
+            algorithm: metadata.algorithm,
+            version: metadata.version,
+            enabled: true,
+            created: metadata.created
+          }
+        };
+        dispatch({ type: 'UPDATE_USER', payload: updatedUser });
         return;
       } catch (error) {
         console.error('🔧 Failed to initialize encryption:', error);
-        toast.error('Failed to initialize encryption');
         return;
       }
     }
     
-    // If user has salt but no stable encryption key, request one
+    // If user has salt but no stable encryption key, request one (non-blocking)
     if (state.user.encryption?.salt && !state.user.encryption?.encryptionKey) {
-      try {
-        console.log('� Requesting stable encryption key for user...');
-        const response = await axios.post('/api/users/encryption/stable-key');
-        
+      console.log('🔧 Requesting stable encryption key for user...');
+      axios.post('/api/users/encryption/stable-key').then(response => {
         if (response.data.user) {
           console.log('🔧 Stable encryption key added to user');
           dispatch({ type: 'UPDATE_USER', payload: response.data.user });
         }
-      } catch (error) {
+      }).catch(error => {
         console.warn('🔧 Failed to get stable encryption key:', error);
-        // This is not critical - the fallback mechanism will handle it
-      }
+      });
     }
 
     console.log('🔧 Encryption initialization complete');
