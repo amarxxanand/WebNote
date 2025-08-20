@@ -1,0 +1,29 @@
+.App {
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+}
+
+/* Theme transitions */
+.dark {
+  background-color: #000;
+  color: #fff;
+}
+
+.light {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .App {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .App {
+    font-size: 12px;
+  }
+} 

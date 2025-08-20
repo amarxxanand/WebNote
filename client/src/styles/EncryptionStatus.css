@@ -1,0 +1,176 @@
+.encryption-status {
+  position: relative;
+  display: inline-block;
+  margin-left: 12px;
+}
+
+.encryption-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  color: #fff;
+}
+
+.encryption-indicator:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.status-icon {
+  font-size: 14px;
+}
+
+.status-icon.enabled {
+  color: #22c55e;
+}
+
+.status-icon.pending {
+  color: #f59e0b;
+}
+
+.status-icon.disabled {
+  color: #ef4444;
+}
+
+.status-text {
+  font-weight: 500;
+}
+
+.encryption-details {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 400px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  color: #fff;
+}
+
+.details-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #333;
+}
+
+.shield-icon {
+  color: #22c55e;
+  font-size: 18px;
+}
+
+.details-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.encryption-info {
+  margin-bottom: 16px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.info-item strong {
+  color: #ccc;
+}
+
+.encryption-description {
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.encryption-description p {
+  margin-bottom: 12px;
+  color: #ccc;
+}
+
+.encryption-description ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #22c55e;
+}
+
+.encryption-description li {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.initialize-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.initialize-btn:hover {
+  background: #16a34a;
+}
+
+.encryption-warning {
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #fecaca;
+}
+
+.encryption-warning strong {
+  color: #ef4444;
+}
+
+/* Light theme adjustments */
+.light .encryption-details {
+  background: #fff;
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.light .details-header {
+  border-bottom-color: #e5e7eb;
+}
+
+.light .info-item strong {
+  color: #6b7280;
+}
+
+.light .encryption-description p {
+  color: #6b7280;
+}
+
+.light .encryption-warning {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
