@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const passport = require('passport');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -68,6 +69,16 @@ app.use('/api/users', userRoutes);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'WebNote server is running' });
 });
+
+// Serve static files from React build in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+  
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
