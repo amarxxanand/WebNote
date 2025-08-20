@@ -2,6 +2,15 @@
   position: relative;
   display: inline-block;
   margin-left: 12px;
+  transition: margin-left 0.3s ease;
+}
+
+.encryption-status.sidebar-open {
+  margin-left: 362px; /* 350px sidebar width + 12px base margin */
+}
+
+.encryption-status.sidebar-closed {
+  margin-left: 12px;
 }
 
 .encryption-indicator {
@@ -173,4 +182,11 @@
   background: rgba(239, 68, 68, 0.05);
   border-color: rgba(239, 68, 68, 0.2);
   color: #dc2626;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .encryption-status.sidebar-open {
+    margin-left: 12px;
+  }
 }

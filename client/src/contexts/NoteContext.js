@@ -99,8 +99,8 @@ export const NoteProvider = ({ children }) => {
             limit: 20,
             sortBy: state.sortBy,
             sortOrder: state.sortOrder,
-            filter: state.filter,
-            ...(state.searchQuery && { search: state.searchQuery })
+            filter: state.filter
+            // Note: Removed search parameter - search is handled client-side for encrypted notes
           });
 
           const response = await axios.get(`/api/notes?${params}`);
@@ -188,7 +188,7 @@ export const NoteProvider = ({ children }) => {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.sortBy, state.sortOrder, state.filter, state.searchQuery, decryptNote]);
+  }, [state.sortBy, state.sortOrder, state.filter, decryptNote]); // Removed searchQuery since search is client-side
 
   // Initialize by fetching cloud notes - start as soon as user is authenticated
   useEffect(() => {

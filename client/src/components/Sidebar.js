@@ -4,8 +4,6 @@ import {
   FaSearch, 
   FaStar, 
   FaArchive, 
-  FaTrash, 
-  FaEllipsisV,
   FaFilter
 } from 'react-icons/fa';
 import { useNotes } from '../contexts/NoteContext';
@@ -23,8 +21,7 @@ const Sidebar = ({
     searchQuery, 
     filter, 
     setSearchQuery, 
-    setFilter, 
-    fetchNotes 
+    setFilter
   } = useNotes();
   
   const [searchTerm, setSearchTerm] = useState(searchQuery);
@@ -48,6 +45,21 @@ const Sidebar = ({
   const getFilteredNotes = () => {
     let filtered = notes;
 
+    // Apply search filter first
+    if (searchQuery && searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(note => {
+        const title = (note.title || '').toLowerCase();
+        const content = (note.content || '').toLowerCase();
+        const tags = (note.tags || []).join(' ').toLowerCase();
+        
+        return title.includes(query) || 
+               content.includes(query) || 
+               tags.includes(query);
+      });
+    }
+
+    // Apply other filters
     if (filter === 'favorite') {
       filtered = filtered.filter(note => note.isFavorite);
     } else if (filter === 'archived') {
@@ -142,13 +154,32 @@ const Sidebar = ({
           </div>
         ) : filteredNotes.length === 0 ? (
           <div className="empty-notes">
-            <p>No notes found</p>
-            <button 
-              className="create-first-note-btn"
-              onClick={onCreateNote}
-            >
-              Create your first note
-            </button>
+            {searchQuery ? (
+              <div>
+                <p>No notes found for "{searchQuery}"</p>
+                <button 
+                  className="clear-search-btn"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSearchQuery('');
+                  }}
+                >
+                  Clear search
+                </button>
+              </div>
+            ) : notes.length === 0 ? (
+              <div>
+                <p>No notes found</p>
+                <button 
+                  className="create-first-note-btn"
+                  onClick={onCreateNote}
+                >
+                  Create your first note
+                </button>
+              </div>
+            ) : (
+              <p>No notes match the current filter</p>
+            )}
           </div>
         ) : (
           filteredNotes.map(note => {

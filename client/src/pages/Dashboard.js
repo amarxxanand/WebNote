@@ -87,7 +87,7 @@ const Dashboard = () => {
         theme={theme}
         currentNote={currentNote}
       />
-      <EncryptionStatus />
+      <EncryptionStatus sidebarOpen={sidebarOpen} />
       
       <div className="dashboard-content">
         <Sidebar 

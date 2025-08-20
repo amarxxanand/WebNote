@@ -4,7 +4,7 @@ import { FaLock, FaLockOpen, FaShieldAlt, FaCog } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import '../styles/EncryptionStatus.css';
 
-const EncryptionStatus = () => {
+const EncryptionStatus = ({ sidebarOpen = false }) => {
   const { user, encryptionEnabled, initializeEncryption } = useAuth();
   const [showDetails, setShowDetails] = useState(false);
 
@@ -56,7 +56,7 @@ const EncryptionStatus = () => {
   };
 
   return (
-    <div className="encryption-status">
+    <div className={`encryption-status ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <div 
         className="encryption-indicator"
         onClick={() => setShowDetails(!showDetails)}
