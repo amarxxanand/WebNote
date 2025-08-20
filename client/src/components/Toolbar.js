@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { 
   FaBars, 
   FaUser, 
-  FaSignOutAlt, 
-  FaSun, 
-  FaMoon, 
-  FaCog,
-  FaBell
+  FaSignOutAlt
 } from 'react-icons/fa';
 import '../styles/Toolbar.css';
 
@@ -14,15 +10,12 @@ const Toolbar = ({
   user, 
   onLogout, 
   onToggleSidebar, 
-  onToggleTheme, 
-  theme,
   currentNote 
 }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleLogout = () => {
     onLogout();
-    setShowUserMenu(false);
   };
 
   return (
@@ -46,22 +39,13 @@ const Toolbar = ({
       </div>
 
       <div className="toolbar-right">
-        <button 
-          className="theme-toggle-btn"
-          onClick={onToggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+        <div 
+          className="user-menu-container"
+          onMouseEnter={() => setShowUserMenu(true)}
+          onMouseLeave={() => setShowUserMenu(false)}
         >
-          {theme === 'dark' ? <FaSun /> : <FaMoon />}
-        </button>
-
-        <button className="notifications-btn" title="Notifications">
-          <FaBell />
-        </button>
-
-        <div className="user-menu-container">
           <button 
             className="user-menu-btn"
-            onClick={() => setShowUserMenu(!showUserMenu)}
           >
             {user?.avatar ? (
               <img 
@@ -85,10 +69,6 @@ const Toolbar = ({
               </div>
               
               <div className="menu-items">
-                <button className="menu-item">
-                  <FaCog />
-                  Settings
-                </button>
                 <button className="menu-item" onClick={handleLogout}>
                   <FaSignOutAlt />
                   Logout
@@ -98,13 +78,6 @@ const Toolbar = ({
           )}
         </div>
       </div>
-
-      {showUserMenu && (
-        <div 
-          className="menu-overlay"
-          onClick={() => setShowUserMenu(false)}
-        />
-      )}
     </div>
   );
 };

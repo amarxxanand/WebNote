@@ -73,18 +73,12 @@ const Dashboard = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
   return (
     <div className={`dashboard ${theme}`}>
       <Toolbar 
         user={user}
         onLogout={logout}
         onToggleSidebar={toggleSidebar}
-        onToggleTheme={toggleTheme}
-        theme={theme}
         currentNote={currentNote}
       />
       <EncryptionStatus sidebarOpen={sidebarOpen} />

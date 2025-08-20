@@ -16,12 +16,17 @@ root.render(
     >
       <App />
       <Toaster
-        position="top-right"
+        position="top-center"
         toastOptions={{
           duration: 4000,
           style: {
             background: '#333',
             color: '#fff',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            padding: '12px 20px',
+            fontSize: '14px',
+            fontWeight: '500',
           },
         }}
       />

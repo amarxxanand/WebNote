@@ -2,6 +2,7 @@
   position: relative;
   display: inline-block;
   margin-left: 12px;
+    margin-right: 12px;
   transition: margin-left 0.3s ease;
 }
 
@@ -11,6 +12,7 @@
 
 .encryption-status.sidebar-closed {
   margin-left: 12px;
+  margin-right: 12px;
 }
 
 .encryption-indicator {
