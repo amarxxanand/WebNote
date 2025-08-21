@@ -157,7 +157,9 @@ router.get('/google',
 );
 
 router.get('/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
+  passport.authenticate('google', { 
+    failureRedirect: process.env.NODE_ENV === 'production' ? '/' : '/login'
+  }),
   (req, res) => {
     const token = generateToken(req.user._id);
 
@@ -169,7 +171,11 @@ router.get('/google/callback',
     });
 
     // Redirect to frontend with token in URL
-    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard?token=${token}`);
+    const redirectUrl = process.env.NODE_ENV === 'production' 
+      ? `/dashboard?token=${token}`
+      : `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard?token=${token}`;
+    
+    res.redirect(redirectUrl);
   }
 );
 
