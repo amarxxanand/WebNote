@@ -170,8 +170,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const googleLogin = () => {
-    // window.location.href = '/api/auth/google';
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    // Use relative URL for production, falls back to localhost for development
+    const apiUrl = process.env.NODE_ENV === 'production' 
+      ? '/api/auth/google'
+      : 'http://localhost:5000/api/auth/google';
+    window.location.href = apiUrl;
   };
 
   // Encryption utilities
